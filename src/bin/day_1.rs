@@ -2,16 +2,22 @@ use anyhow::{bail, Result};
 use regex::Regex;
 
 fn main() -> Result<()> {
-    println!("The result for part 1 is {}", part_1()?);
-    println!("The result for part 2 is {}", part_2()?);
+    println!("The result for part 1 is {}", part(r"\d", true)?);
+    println!(
+        "The result for part 2 is {}",
+        part(
+            r"\d|oneight|twone|threeight|fiveight|sevenine|nineight|eightwo|one|two|three|four|five|six|seven|eight|nine",
+            false
+        )?
+    );
 
     Ok(())
 }
 
-fn part_1() -> Result<u32> {
+fn part(regex: &str, is_part_1: bool) -> Result<u32> {
     let input = include_str!("../../assets/day_1/input.txt").lines();
     let mut result: Vec<u32> = Vec::new();
-    let re = Regex::new(r"\d")?;
+    let re = Regex::new(regex)?;
 
     for line in input.into_iter() {
         let matches: Vec<&str> = re.find_iter(line).map(|n| n.as_str()).collect();
@@ -20,8 +26,8 @@ fn part_1() -> Result<u32> {
         let last = matches.last();
 
         if let (Some(first), Some(last)) = (first, last) {
-            let mut resulting_number = first.to_string();
-            resulting_number.push_str(last);
+            let mut resulting_number = calculate_resulting_number(is_part_1, first, true)?;
+            resulting_number.push_str(calculate_resulting_number(is_part_1, last, false)?.as_str());
             result.push(resulting_number.parse::<u32>()?);
         } else {
             bail!("Line could not be calculated: {}", line);
@@ -30,32 +36,10 @@ fn part_1() -> Result<u32> {
     Ok(result.iter().sum())
 }
 
-fn part_2() -> Result<u32> {
-    let input = include_str!("../../assets/day_1/input.txt").lines();
-    let mut result: Vec<u32> = Vec::new();
-    let re = Regex::new(
-        r"\d|oneight|twone|threeight|fiveight|sevenine|nineight|eightwo|one|two|three|four|five|six|seven|eight|nine",
-    )?;
-
-    for line in input.into_iter() {
-        let matches: Vec<&str> = re.find_iter(line).map(|n| n.as_str()).collect();
-
-        let first = matches.first();
-        let last = matches.last();
-
-        if let (Some(first), Some(last)) = (first, last) {
-            let mut resulting_number = calculate_resulting_number(first, true)?;
-            resulting_number.push_str(calculate_resulting_number(last, false)?.as_str());
-            println!("Resulting number: {}", resulting_number);
-            result.push(resulting_number.parse::<u32>()?);
-        } else {
-            bail!("Line could not be calculated: {}", line);
-        }
+fn calculate_resulting_number(is_part_1: bool, input: &str, is_first: bool) -> Result<String> {
+    if is_part_1 {
+        return Ok(input.to_string());
     }
-    Ok(result.iter().sum())
-}
-
-fn calculate_resulting_number(input: &str, is_first: bool) -> Result<String> {
     // if input length is 1, we assume it's a digit
     // if input length is more than 1, we assume the number is written out
     if input.len() == 1 {
